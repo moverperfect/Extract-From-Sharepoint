@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Deployment.Internal;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using OpenQA.Selenium;
 using OpenQA.Selenium.IE;
 
-namespace ExtracFromSharepoint
+namespace ExtractFromSharepoint
 {
     class AppDetail
     {

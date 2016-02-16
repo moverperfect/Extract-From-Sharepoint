@@ -9,22 +9,44 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.IE;
 using Excel = Microsoft.Office.Interop.Excel;
 
-namespace ExtracFromSharepoint
+namespace ExtractFromSharepoint
 {
     static class Program
     {
+        /// <summary>
+        /// Stores all of the applications or items within the sharepoint list
+        /// </summary>
         private static List<AppDetail> Applications = new List<AppDetail>();
 
+        /// <summary>
+        /// Password to use for active directory
+        /// </summary>
         private static string _password = "";
 
+        /// <summary>
+        /// The Active Directory domain name
+        /// </summary>
         private static string _adDomain = "";
 
+        /// <summary>
+        /// Active Directory username
+        /// </summary>
         private static string _username = "";
 
+        /// <summary>
+        /// Url to grab all the list from
+        /// </summary>
         private static string _listUrl = "";
 
+        /// <summary>
+        /// The domain of the website or the ip address(used for filtering attachments to links to other websites)
+        /// </summary>
         internal static string Domian = "";
 
+        /// <summary>
+        /// Entry into the program
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
             GetUserInfo();
@@ -61,6 +83,9 @@ namespace ExtracFromSharepoint
             Console.ReadLine();
         }
 
+        /// <summary>
+        /// Grabs all of the user information about the website to scrape and the username and password to use
+        /// </summary>
         private static void GetUserInfo()
         {
             ConsoleKeyInfo key;
