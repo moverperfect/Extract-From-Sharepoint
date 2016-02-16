@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading;
+using System.Xml;
 using OpenQA.Selenium;
 using OpenQA.Selenium.IE;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -12,53 +13,35 @@ namespace ExtracFromSharepoint
 {
     static class Program
     {
-        internal static List<AppDetail> Applications = new List<AppDetail>();
+        private static List<AppDetail> Applications = new List<AppDetail>();
 
-        internal static string Password = "";
+        private static string _password = "";
 
-        internal static string Domain = "";
+        private static string _adDomain = "";
 
-        internal static string Username = "";
+        private static string _username = "";
+
+        private static string _listUrl = "";
+
+        internal static string Domian = "";
 
         static void Main(string[] args)
         {
-            ConsoleKeyInfo key;
-
-            Console.Write("Enter password: ");
-            //do
-            //{
-            //    key = Console.ReadKey(true);
-
-            //    // Ignore any key out of range.
-            //    //if (((int)key.Key) >= 65 && ((int)key.Key <= 90))
-            //    //{
-            //        // Append the character to the password.
-            //        SecurePwd.AppendChar(key.KeyChar);
-            //        Console.Write("*");
-            //    //}
-            //    // Exit if Enter key is pressed.
-            //} while (key.Key != ConsoleKey.Enter);
-            Password = Console.ReadLine();
-            Console.Clear();
-            Console.WriteLine("Enter website Domain");
-            Domain = Console.ReadLine();
-            Console.WriteLine("Please enter your username");
-            Username = Console.ReadLine();
-            
+            GetUserInfo();
 
             // Create a new IE driver and navigate to the url
             var ieDriver = new InternetExplorerDriver();
-            ieDriver.Navigate().GoToUrl("");
+            ieDriver.Navigate().GoToUrl(_listUrl);
             // Wait for the user to log in and go through security concerns
             Console.WriteLine("Please log in to the sharepoint site and wait for it to load, once complete please press enter");
             Console.ReadLine();
-            
+
             var mainStopwatch = new Stopwatch();
             mainStopwatch.Start();
             Console.WriteLine("Looking at the site");
             // Retreive all of the rows
             var all = ieDriver.FindElements(By.ClassName("ms-itmhover"));
-            
+
             Console.WriteLine("Found " + all.Count + " applications in " + mainStopwatch.ElapsedMilliseconds + " milliseconds");
             mainStopwatch.Restart();
             // Grab all of the links to the apps
@@ -76,6 +59,44 @@ namespace ExtracFromSharepoint
             DownloadObjects();
             SaveToExcel();
             Console.ReadLine();
+        }
+
+        private static void GetUserInfo()
+        {
+            ConsoleKeyInfo key;
+
+            // Take in the users password
+            Console.Write("Enter active directory password: ");
+            do
+            {
+                key = Console.ReadKey(true);
+                if (key.Key != ConsoleKey.Backspace && key.Key != ConsoleKey.Enter)
+                {
+                    _password += key.KeyChar;
+                    Console.Write("*");
+                }
+                else
+                {
+                    if (key.Key == ConsoleKey.Backspace && _password.Length > 0)
+                    {
+                        _password = _password.Substring(0, (_password.Length - 1));
+                        Console.Write("\b \b");
+                    }
+                }
+            } while (key.Key != ConsoleKey.Enter);
+            Console.Clear();
+
+            Console.WriteLine("Enter website active directory Domain");
+            _adDomain = Console.ReadLine();
+
+            Console.WriteLine("Please enter your active directory username");
+            _username = Console.ReadLine();
+
+            Console.WriteLine("Please enter the url of the list you would like to extract from");
+            _listUrl = Console.ReadLine();
+
+            Console.WriteLine("Please enter the domain name of your site e.g google.com");
+            Domian = Console.ReadLine();
         }
 
         static void GetPageDetails(string[] allLinks, InternetExplorerDriver ieDriver, Stopwatch sw)
@@ -121,7 +142,7 @@ namespace ExtracFromSharepoint
             
             using (var client = new WebClient())
             {
-                client.Credentials = new NetworkCredential(Username,Password,Domain);
+                client.Credentials = new NetworkCredential(_username,_password,_adDomain);
                 ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
                 for (var i = 0; i < urls.Count; i++)
                 {

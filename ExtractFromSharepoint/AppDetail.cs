@@ -26,7 +26,7 @@ namespace ExtracFromSharepoint
                 for (var i = 0; i < links.Count; i++)
                 {
                     var href = links[i].GetAttribute("href");
-                    if(!href.Contains(""))
+                    if(!href.Contains(Program.Domian))
                         continue;
                     prop = prop.Replace(links[i].Text,
                         "||(|)||" + href + "||()||" + links[i].Text + "||(|)||");
