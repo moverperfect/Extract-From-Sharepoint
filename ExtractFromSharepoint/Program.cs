@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading;
-using System.Xml;
 using OpenQA.Selenium;
 using OpenQA.Selenium.IE;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -16,27 +15,27 @@ namespace ExtractFromSharepoint
         /// <summary>
         /// Stores all of the applications or items within the sharepoint list
         /// </summary>
-        private static List<AppDetail> Applications = new List<AppDetail>();
+        private static readonly List<AppDetail> Applications = new List<AppDetail>();
 
         /// <summary>
         /// Password to use for active directory
         /// </summary>
-        private static string _password = "";
+        internal static string Password = "";
 
         /// <summary>
         /// The Active Directory domain name
         /// </summary>
-        private static string _adDomain = "";
+        internal static string AdDomain = "";
 
         /// <summary>
         /// Active Directory username
         /// </summary>
-        private static string _username = "";
+        internal static string Username = "";
 
         /// <summary>
         /// Url to grab all the list from
         /// </summary>
-        private static string _listUrl = "";
+        internal static string ListUrl = "";
 
         /// <summary>
         /// The domain of the website or the ip address(used for filtering attachments to links to other websites)
@@ -49,11 +48,48 @@ namespace ExtractFromSharepoint
         /// <param name="args"></param>
         static void Main(string[] args)
         {
-            GetUserInfo();
+            if (!FileIo.IsUConfigExist)
+            {
+                UserDetails.GetUserInfo();
+                UserDetails.SaveUserConfig();
+            }
+            else
+            {
+                FileIo.ImportUserConfig();
+            }
+
+            while (true)
+            {
+                Console.Clear();
+                Console.WriteLine("Welcome to the main menu " + Username);
+                Console.WriteLine("1. Extract from SharePoint list");
+                Console.WriteLine("2. Update SharePoint settings");
+                Console.WriteLine("3. Exit");
+
+                var option = Console.ReadLine();
+
+                switch (option)
+                {
+                    case "1":
+                        throw new NotImplementedException();
+                        break;
+
+                    case "2":
+                        UserDetails.Main();
+                        break;
+
+                    case "3":
+                        return;
+
+                    default:
+                        continue;
+                }
+            }
+
 
             // Create a new IE driver and navigate to the url
             var ieDriver = new InternetExplorerDriver();
-            ieDriver.Navigate().GoToUrl(_listUrl);
+            ieDriver.Navigate().GoToUrl(ListUrl);
             // Wait for the user to log in and go through security concerns
             Console.WriteLine("Please log in to the sharepoint site and wait for it to load, once complete please press enter");
             Console.ReadLine();
@@ -81,47 +117,6 @@ namespace ExtractFromSharepoint
             DownloadObjects();
             SaveToExcel();
             Console.ReadLine();
-        }
-
-        /// <summary>
-        /// Grabs all of the user information about the website to scrape and the username and password to use
-        /// </summary>
-        private static void GetUserInfo()
-        {
-            ConsoleKeyInfo key;
-
-            // Take in the users password
-            Console.Write("Enter active directory password: ");
-            do
-            {
-                key = Console.ReadKey(true);
-                if (key.Key != ConsoleKey.Backspace && key.Key != ConsoleKey.Enter)
-                {
-                    _password += key.KeyChar;
-                    Console.Write("*");
-                }
-                else
-                {
-                    if (key.Key == ConsoleKey.Backspace && _password.Length > 0)
-                    {
-                        _password = _password.Substring(0, (_password.Length - 1));
-                        Console.Write("\b \b");
-                    }
-                }
-            } while (key.Key != ConsoleKey.Enter);
-            Console.Clear();
-
-            Console.WriteLine("Enter website active directory Domain");
-            _adDomain = Console.ReadLine();
-
-            Console.WriteLine("Please enter your active directory username");
-            _username = Console.ReadLine();
-
-            Console.WriteLine("Please enter the url of the list you would like to extract from");
-            _listUrl = Console.ReadLine();
-
-            Console.WriteLine("Please enter the domain name of your site e.g google.com");
-            Domian = Console.ReadLine();
         }
 
         static void GetPageDetails(string[] allLinks, InternetExplorerDriver ieDriver, Stopwatch sw)
@@ -167,7 +162,7 @@ namespace ExtractFromSharepoint
             
             using (var client = new WebClient())
             {
-                client.Credentials = new NetworkCredential(_username,_password,_adDomain);
+                client.Credentials = new NetworkCredential(Username,Password,AdDomain);
                 ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
                 for (var i = 0; i < urls.Count; i++)
                 {
