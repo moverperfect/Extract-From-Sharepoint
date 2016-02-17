@@ -59,7 +59,9 @@
     <Compile Include="FileIO.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SharePointExtract.cs" />
     <Compile Include="UserDetails.cs" />
+    <Compile Include="XMLTemplate.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

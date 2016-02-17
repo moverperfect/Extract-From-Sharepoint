@@ -66,7 +66,7 @@ namespace ExtractFromSharepoint
         /// <summary>
         /// Gets the user's password
         /// </summary>
-        private static void GetUserPassword()
+        internal static void GetUserPassword()
         {
             ConsoleKeyInfo key;
 

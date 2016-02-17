@@ -15,7 +15,7 @@ namespace ExtractFromSharepoint
         /// <summary>
         /// Stores all of the applications or items within the sharepoint list
         /// </summary>
-        private static readonly List<AppDetail> Applications = new List<AppDetail>();
+        internal static readonly List<AppDetail> Applications = new List<AppDetail>();
 
         /// <summary>
         /// Password to use for active directory
@@ -71,7 +71,7 @@ namespace ExtractFromSharepoint
                 switch (option)
                 {
                     case "1":
-                        throw new NotImplementedException();
+                        SharePointExtract.Main();
                         break;
 
                     case "2":
@@ -83,91 +83,6 @@ namespace ExtractFromSharepoint
 
                     default:
                         continue;
-                }
-            }
-
-
-            // Create a new IE driver and navigate to the url
-            var ieDriver = new InternetExplorerDriver();
-            ieDriver.Navigate().GoToUrl(ListUrl);
-            // Wait for the user to log in and go through security concerns
-            Console.WriteLine("Please log in to the sharepoint site and wait for it to load, once complete please press enter");
-            Console.ReadLine();
-
-            var mainStopwatch = new Stopwatch();
-            mainStopwatch.Start();
-            Console.WriteLine("Looking at the site");
-            // Retreive all of the rows
-            var all = ieDriver.FindElements(By.ClassName("ms-itmhover"));
-
-            Console.WriteLine("Found " + all.Count + " applications in " + mainStopwatch.ElapsedMilliseconds + " milliseconds");
-            mainStopwatch.Restart();
-            // Grab all of the links to the apps
-            var allLinks = new string[all.Count];
-            var i = 0;
-            foreach (IWebElement element in all)
-            {
-                allLinks[i] = element.FindElement(By.ClassName("ms-vb-title")).FindElement(By.TagName("a")).GetAttribute("href");
-                i++;
-                Console.WriteLine(i + "/" + all.Count + " Item urls discovered");
-            }
-            Console.WriteLine("All items urls discovered in " + mainStopwatch.ElapsedMilliseconds + " milliseconds");
-            mainStopwatch.Restart();
-            GetPageDetails(allLinks, ieDriver, mainStopwatch);
-            DownloadObjects();
-            SaveToExcel();
-            Console.ReadLine();
-        }
-
-        static void GetPageDetails(string[] allLinks, InternetExplorerDriver ieDriver, Stopwatch sw)
-        {
-            for (var i = 0; i < allLinks.Length; i++)
-            {
-                Console.WriteLine("Checking item no " + (i+1) + "/" + allLinks.Length);
-                ieDriver.Navigate().GoToUrl(allLinks[i]);
-                Thread.Sleep(1000);
-                var tempApp = new AppDetail(ieDriver);
-                Applications.Add(tempApp);
-                Console.WriteLine("Checked URL in a total of " + sw.ElapsedMilliseconds + " milliseconds, eta for rest is " + sw.ElapsedMilliseconds*(allLinks.Length-(i+1)));
-                sw.Restart();
-            }
-            Console.WriteLine("Retreived data from all items");
-        }
-
-        static void DownloadObjects()
-        {
-            Console.WriteLine("Starting download on all files");
-            Console.WriteLine("First collecting the urls to download from");
-            var urls = new List<string>();
-            var fileNames = new List<string>();
-
-            foreach (var app in Applications)
-            {
-                foreach (var property in app.Properties)
-                {
-                    if (property.Contains("||(|)||"))
-                    {
-                        var split = property.Split(new[] {"||(|)||"}, StringSplitOptions.None);
-                        for (var k = 1; k < split.Length; k=k+2)
-                        {
-                            var details = split[k].Split(new [] { "||()||"}, StringSplitOptions.None);
-                            urls.Add(details[0]);
-                            fileNames.Add(details[1]);
-                        }
-                    }
-                }
-            }
-
-            Console.WriteLine("Found " + urls.Count + " files to download");
-            
-            using (var client = new WebClient())
-            {
-                client.Credentials = new NetworkCredential(Username,Password,AdDomain);
-                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-                for (var i = 0; i < urls.Count; i++)
-                {
-                    client.DownloadFile(urls[i],"Objects\\" + fileNames[i]);
-                    Console.WriteLine("Downloaded file " + (i+1));
                 }
             }
         }
