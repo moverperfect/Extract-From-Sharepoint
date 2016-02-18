@@ -31,7 +31,7 @@ namespace ExtractFromSharepoint
                 {
                     case "1":
                         GetUserInfo();
-                        SaveUserConfig();
+                        FileIo.ExportUserConfig();
                         break;
 
                     case "2":
@@ -90,25 +90,6 @@ namespace ExtractFromSharepoint
                 }
             } while (key.Key != ConsoleKey.Enter);
             Console.Clear();
-        }
-
-        /// <summary>
-        /// Saves the users configuration to a file
-        /// </summary>
-        internal static void SaveUserConfig()
-        {
-            var w = new XmlTextWriter("User.config", Encoding.Default);
-            
-            w.WriteStartDocument();
-            w.WriteStartElement("config");
-            w.WriteElementString("AdDomain", Program.AdDomain);
-            w.WriteElementString("Username", Program.Username);
-            w.WriteElementString("ListUrl", Program.ListUrl);
-            w.WriteElementString("Domain", Program.Domian);
-            w.WriteEndElement();
-            w.WriteEndDocument();
-
-            w.Close();
         }
     }
 }

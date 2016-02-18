@@ -56,9 +56,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppDetail.cs" />
+    <Compile Include="ExcelColumn.cs" />
+    <Compile Include="ExcelExport.cs" />
     <Compile Include="FileIO.cs" />
+    <Compile Include="Header.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Row.cs" />
     <Compile Include="SharePointExtract.cs" />
     <Compile Include="UserDetails.cs" />
     <Compile Include="XMLTemplate.cs" />

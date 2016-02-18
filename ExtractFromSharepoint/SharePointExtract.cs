@@ -18,10 +18,12 @@ namespace ExtractFromSharepoint
             while (true)
             {
                 Console.Clear();
+                Console.WriteLine("There are " + Program.Applications.Count + " application/s stored");
                 Console.WriteLine("Sharepoint extract menu");
                 Console.WriteLine("1. Extract from sharepoint site");
                 Console.WriteLine("2. Extract from file");
-                Console.WriteLine("3. Back");
+                Console.WriteLine("3. Extract to excel file");
+                Console.WriteLine("4. Back");
 
                 var option = Console.ReadLine();
 
@@ -52,10 +54,16 @@ namespace ExtractFromSharepoint
                         break;
 
                     case "2":
-
+                        Console.WriteLine("Please enter the name of the file to load from");
+                        var readFile = Console.ReadLine();
+                        FileIo.ImportItems(readFile);
                         break;
 
                     case "3":
+                        ExcelExport.Main();
+                        break;
+
+                    case "4":
                         return;
 
                     default:

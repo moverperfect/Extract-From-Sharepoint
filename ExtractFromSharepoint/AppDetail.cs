@@ -31,6 +31,12 @@ namespace ExtractFromSharepoint
             }
         }
 
+        public AppDetail()
+        {
+            ProperyNames = new List<string>();
+            Properties = new List<string>();
+        }
+
         internal List<string> ProperyNames { get; set; }
 
         internal List<string> Properties { get; set; }
