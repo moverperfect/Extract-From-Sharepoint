@@ -59,7 +59,7 @@ namespace ExtractFromSharepoint
             var apps = new List<string>();
             foreach (string t in Program.Applications[0].ProperyNames)
             {
-                if (Columns.Where(p => p.Name == t).ToList().Count == 0)
+                if (Columns.Where(p => p.Name.ToLower() == t.ToLower()).ToList().Count == 0)
                 {
                     apps.Add(t);
                 }
@@ -112,7 +112,7 @@ namespace ExtractFromSharepoint
                 {
                     for (var k = 0; k < Program.Applications[i].ProperyNames.Count; k++)
                     {
-                        if (Program.Applications[i].ProperyNames[k] == Columns[j].Name)
+                        if (string.Equals(Program.Applications[i].ProperyNames[k], Columns[j].Name, StringComparison.CurrentCultureIgnoreCase))
                         {
                             xlWorkSheet.Cells[(i + 2), (j + 1)] = Program.Applications[i].Properties[k];
                         }
