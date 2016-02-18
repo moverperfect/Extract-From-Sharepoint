@@ -204,7 +204,9 @@ namespace ExtractFromSharepoint
             //    Directory.GetCurrentDirectory() +
             //    "\\Objects\\Apps AIS - list of apps gone through internal review 08022016.msg", 500, 500);
 
-            xlWorkBook.SaveAs(Directory.GetCurrentDirectory() + "\\Export.xls", XlFileFormat.xlWorkbookNormal, misValue, misValue, misValue, misValue, XlSaveAsAccessMode.xlExclusive, misValue, misValue, misValue, misValue, misValue);
+            xlWorkBook.SaveAs(Directory.GetCurrentDirectory() + "\\Export", XlFileFormat.xlOpenXMLWorkbook, misValue,
+                misValue, misValue, misValue, XlSaveAsAccessMode.xlNoChange, XlSaveConflictResolution.xlUserResolution,
+                true, misValue, misValue, misValue);
             xlWorkBook.Close(true, misValue, misValue);
             xlApp.Quit();
 
