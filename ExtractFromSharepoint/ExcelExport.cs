@@ -92,7 +92,7 @@ namespace ExtractFromSharepoint
             }
 
             Console.WriteLine("Starting export to excel");
-            var xlApp = new Application {Visible = true};
+            var xlApp = new Application();
 
             object misValue = Missing.Value;
 
