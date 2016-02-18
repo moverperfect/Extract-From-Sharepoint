@@ -14,7 +14,9 @@ namespace ExtractFromSharepoint
         /// <param name="thisName">The name of this 'Property'</param>
         /// <param name="propertyNames">The names of the string properties</param>
         /// <param name="properties">The string properties</param>
+        /// <param name="propertyAttributeNames">Names of the attributes to add</param>
         /// <param name="subProperties">A XmlTemplate filled with its own elements that is part of this element</param>
+        /// <param name="propertyAttributes">Attributes to add</param>
         public XmlTemplate(string thisName, List<string> propertyNames, List<string> properties,
             List<string> propertyAttributes, List<string> propertyAttributeNames, List<XmlTemplate> subProperties)
         {

@@ -1,12 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Net;
-using System.Threading;
-using OpenQA.Selenium;
-using OpenQA.Selenium.IE;
-using Excel = Microsoft.Office.Interop.Excel;
 
 namespace ExtractFromSharepoint
 {

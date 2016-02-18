@@ -15,6 +15,8 @@ namespace ExtractFromSharepoint
             foreach (var row in rows)
             {
                 var cells = row.FindElements(By.TagName("td"));
+                if(cells[0].Text == "")
+                    continue;
                 var propName = cells[0].Text;
                 var links = cells[1].FindElements(By.TagName("a"));
                 var prop = cells[1].Text;

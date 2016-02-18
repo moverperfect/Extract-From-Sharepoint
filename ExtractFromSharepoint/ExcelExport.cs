@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Microsoft.Office.Core;
 using Microsoft.Office.Interop.Excel;
 
 namespace ExtractFromSharepoint
@@ -137,7 +138,7 @@ namespace ExtractFromSharepoint
                 ((Range)xlWorkSheet.Cells[(i + 2), 1]).EntireRow.RowHeight = Rows[row].Height;
                 ((Range)xlWorkSheet.Cells[(i + 2), 1]).EntireRow.Interior.Color = ColorTranslator.ToOle(ColorTranslator.FromHtml(Rows[row].Colour));
                 row++;
-                if (row > Rows.Count)
+                if (row >= Rows.Count)
                     row = 0;
             }
 
@@ -158,27 +159,42 @@ namespace ExtractFromSharepoint
                         {
                             var filename = split[j].Split(new string[] {"||()||"}, StringSplitOptions.None)[1];
                             decimal left = 0;
-                            for (var k = 0; k < Columns.Count; k++)
+                            int column;
+                            for (column = 0; column < Columns.Count; column++)
                             {
-                                if (Columns[k].Name == application.ProperyNames[index])
+                                if (Columns[column].Name == application.ProperyNames[index])
                                 {
                                     break;
                                 }
-                                left += Columns[k].Width;
+                                left += Columns[column].Width;
                             }
+
+                            // If k is equal to the count then the attachment was not found, dont save it to excel
+                            if (column == Columns.Count)
+                            {
+                                break;
+                            }
+
                             var top = Header.Height;
-                            for (var k = 0; k < i; k++)
+                            for (var k = 0; k <= i; k++)
                             {
-                                top += Rows[(i%Rows.Count)].Height;
+                                if (k == i)
+                                {
+                                    top += Rows[(k % Rows.Count)].Height*(decimal) 0.1;
+                                }
+                                else
+                                {
+                                    top += Rows[(k % Rows.Count)].Height;
+                                }
                             }
-                            var width = 0D;
-                            foreach (ExcelColumn column in Columns.Where(column => column.Name == application.ProperyNames[index]))
-                            {
-                                width = (double) (column.Width/(decimal) 1.2);
-                            }
-                            var height = Rows[i%Rows.Count].Height/(decimal) 1.2;
-                            oleObjects.Add(Type.Missing, Directory.GetCurrentDirectory() + "\\Objects\\" + filename, false, false, Type.Missing,
-                                Type.Missing, Type.Missing, left*(decimal) 5.4, top, width/3, height);
+
+                            var width = (double) (Columns[column].Width*(decimal) 5);
+                            var height = (double) (Rows[i%Rows.Count].Height/(decimal) 1.2);
+                            var ole = oleObjects.Add(Type.Missing, Directory.GetCurrentDirectory() + "\\Objects\\" + filename, false, false, Type.Missing,
+                                Type.Missing, Type.Missing, left*(decimal) 5.415, top, width/3, height);
+                            ole.ShapeRange.LockAspectRatio = MsoTriState.msoFalse;
+                            ole.Width = width;
+                            ole.Height = height;
                         }
                     }
                 }
@@ -188,7 +204,7 @@ namespace ExtractFromSharepoint
             //    Directory.GetCurrentDirectory() +
             //    "\\Objects\\Apps AIS - list of apps gone through internal review 08022016.msg", 500, 500);
 
-            xlWorkBook.SaveAs(Directory.GetCurrentDirectory() + "\\Export.xlsx", XlFileFormat.xlWorkbookNormal, misValue, misValue, misValue, misValue, XlSaveAsAccessMode.xlExclusive, misValue, misValue, misValue, misValue, misValue);
+            xlWorkBook.SaveAs(Directory.GetCurrentDirectory() + "\\Export.xls", XlFileFormat.xlWorkbookNormal, misValue, misValue, misValue, misValue, XlSaveAsAccessMode.xlExclusive, misValue, misValue, misValue, misValue, misValue);
             xlWorkBook.Close(true, misValue, misValue);
             xlApp.Quit();
 
