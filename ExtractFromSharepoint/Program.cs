@@ -41,14 +41,16 @@ namespace ExtractFromSharepoint
         /// <param name="args"></param>
         private static void Main(string[] args)
         {
-            if (!FileIo.IsUConfigExist)
+            // If the user config exists then import it
+            if (FileIo.IsUConfigExist)
+            {
+                FileIo.ImportUserConfig();
+            }
+            // Else ask the user for their configuration
+            else
             {
                 UserDetails.GetUserInfo();
                 FileIo.ExportUserConfig();
-            }
-            else
-            {
-                FileIo.ImportUserConfig();
             }
 
             while (true)
