@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Xml;
 
 namespace ExtractFromSharepoint
@@ -31,26 +32,32 @@ namespace ExtractFromSharepoint
         /// <summary>
         /// The names of all of the String Properties that are a part of this element
         /// </summary>
-        internal List<string> PropertyNames { get; set; }
+        internal List<string> PropertyNames { private get; set; }
 
         /// <summary>
         /// The string properties that are a part of this element
         /// </summary>
-        internal List<string> Properties { get; set; }
+        internal List<string> Properties { private get; set; }
 
-        internal List<string> PropertyAttributes { get; set; }
+        /// <summary>
+        /// The list of attribute values to be inserted
+        /// </summary>
+        internal List<string> PropertyAttributes { private get; set; }
 
-        internal List<string> PropertyAttributeNames { get; set; } 
+        /// <summary>
+        /// List of the attribute names
+        /// </summary>
+        internal List<string> PropertyAttributeNames { private get; set; } 
 
         /// <summary>
         /// The name of this element
         /// </summary>
-        internal string ThisName { get; set; }
+        private string ThisName { get; }
 
         /// <summary>
         /// A list of the elements that are within this element with their own properties e.g tires are all inside the element of a car
         /// </summary>
-        internal List<XmlTemplate> SubProperties { get; set; }
+        internal List<XmlTemplate> SubProperties { get; }
 
         /// <summary>
         /// Write all of the data to a XmlWriter
@@ -72,10 +79,7 @@ namespace ExtractFromSharepoint
             }
 
             // Write all of the elements that are inside this element
-            for (var i = 0; i < SubProperties.Count; i++)
-            {
-                w = SubProperties[i].GetData(w);
-            }
+            w = SubProperties.Aggregate(w, (current, t) => t.GetData(current));
 
             // End this element and return
             w.WriteEndElement();

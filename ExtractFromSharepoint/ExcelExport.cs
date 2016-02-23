@@ -10,19 +10,34 @@ using Microsoft.Office.Interop.Excel;
 
 namespace ExtractFromSharepoint
 {
+    /// <summary>
+    /// Handles the export to excel functions
+    /// </summary>
     internal static class ExcelExport
     {
+        /// <summary>
+        /// List of columns that will be exported to excel
+        /// </summary>
         internal static List<ExcelColumn> Columns = new List<ExcelColumn>();
 
+        /// <summary>
+        /// Represents the header row that will get exported
+        /// </summary>
         internal static Header Header = new Header();
 
+        /// <summary>
+        /// Represents the rows that will be exported
+        /// </summary>
         internal static List<Row> Rows = new List<Row>();
 
+        /// <summary>
+        /// Entry point into the excel export
+        /// </summary>
         internal static void Main()
         {
-            FileIo.ImportExcelConfig();
-            if (ValidateColumns())
-                return;
+            // Import the excel config if it exists
+            if (FileIo.IsEConfigExist) FileIo.ImportExcelConfig();
+
             while (true)
             {
                 Console.Clear();
@@ -37,6 +52,24 @@ namespace ExtractFromSharepoint
                 switch (option)
                 {
                     case "1":
+                        // If they do not have a config file then do not allow the export
+                        if (!FileIo.IsEConfigExist)
+                        {
+                            Console.WriteLine("You do not have a configuration file in this directory, please set one up");
+                            continue;
+                        }
+                        
+                        // If they agree about the missing columns then continue
+                        if (ValidateColumns())
+                            return;
+                        if (Columns.Count == 0)
+                        {
+                            Console.Clear();
+                            Console.WriteLine("No Columns to export");
+                            Console.WriteLine("Press enter to continue");
+                            Console.ReadLine();
+                            continue;
+                        }
                         SaveToExcel();
                         break;
 
@@ -50,46 +83,46 @@ namespace ExtractFromSharepoint
                         continue;
                 }
             }
-            
         }
 
+        /// <summary>
+        /// Shows the columns that will not be exported to excel and asks the user for confirmation
+        /// </summary>
+        /// <returns>If the user would like to stop the export</returns>
         private static bool ValidateColumns()
         {
             Console.WriteLine("We have detected " + Columns.Count + " column properties");
-            var apps = new List<string>();
-            foreach (string t in Program.Applications[0].ProperyNames)
+
+            // Extract all of the apps that will not be exported
+            var apps =
+                Program.Applications[0].ProperyNames.Where(
+                    t =>
+                        Columns.Where(p => string.Equals(p.Name, t, StringComparison.CurrentCultureIgnoreCase))
+                            .ToList()
+                            .Count == 0).ToList();
+
+            // If they do not have any apps to export then return false
+            if (apps.Count == 0) return false;
+
+            Console.WriteLine("Some columns are not going to be exported, this list is below");
+            Console.WriteLine("If you would like to exit please type y");
+            // Display all of the apps
+            foreach (var app in apps)
             {
-                if (Columns.Where(p => p.Name.ToLower() == t.ToLower()).ToList().Count == 0)
-                {
-                    apps.Add(t);
-                }
+                Console.WriteLine(app);
             }
 
-            if (apps.Count > 0)
-            {
-                Console.WriteLine("Some columns are not going to be exported, this list is below");
-                Console.WriteLine("If you would like to exit please type y");
-                foreach (var app in apps)
-                {
-                    Console.WriteLine(app);
-                }
-                if (Console.ReadLine() == "y")
-                {
-                    return true;
-                }
-            }
-            return false;
+            // Return the result of there action
+            return Console.ReadLine() == "y";
         }
 
-        static void SaveToExcel()
+        /// <summary>
+        /// Saves all of the information stored to excel
+        /// </summary>
+        private static void SaveToExcel()
         {
-            decimal dpiX;
-            decimal dpiY;
-            using (var graphics = Graphics.FromHwnd(IntPtr.Zero))
-            {
-                dpiX = (decimal) graphics.DpiX;
-                dpiY = (decimal) graphics.DpiY;
-            }
+            if (Columns.Count == 0)
+                throw new Exception("No Columns to export");
 
             Console.WriteLine("Starting export to excel");
             var xlApp = new Application();
@@ -97,7 +130,7 @@ namespace ExtractFromSharepoint
             object misValue = Missing.Value;
 
             var xlWorkBook = xlApp.Workbooks.Add(misValue);
-            var xlWorkSheet = (Worksheet)xlWorkBook.Worksheets.Item[1];
+            var xlWorkSheet = (Worksheet) xlWorkBook.Worksheets.Item[1];
 
             Console.WriteLine("Inputting Column names");
             for (var i = 0; i < Columns.Count; i++)
@@ -107,12 +140,13 @@ namespace ExtractFromSharepoint
 
             for (var i = 0; i < Program.Applications.Count; i++)
             {
-                Console.WriteLine("Inputting item no " + (i+1));
+                Console.WriteLine("Inputting item no " + (i + 1));
                 for (var j = 0; j < Columns.Count; j++)
                 {
                     for (var k = 0; k < Program.Applications[i].ProperyNames.Count; k++)
                     {
-                        if (string.Equals(Program.Applications[i].ProperyNames[k], Columns[j].Name, StringComparison.CurrentCultureIgnoreCase))
+                        if (string.Equals(Program.Applications[i].ProperyNames[k], Columns[j].Name,
+                            StringComparison.CurrentCultureIgnoreCase))
                         {
                             xlWorkSheet.Cells[(i + 2), (j + 1)] = Program.Applications[i].Properties[k];
                         }
@@ -127,16 +161,19 @@ namespace ExtractFromSharepoint
             }
 
             Console.WriteLine("Formatting the header");
-            ((Range)xlWorkSheet.Cells[1, 1]).EntireRow.RowHeight = Header.Height;
-            ((Range)xlWorkSheet.Cells[1, 1]).EntireRow.Interior.Color = ColorTranslator.ToOle(ColorTranslator.FromHtml(Header.BackgroundColour));
-            ((Range)xlWorkSheet.Cells[1, 1]).EntireRow.Font.Color = ColorTranslator.ToOle(ColorTranslator.FromHtml(Header.TextColour));
+            ((Range) xlWorkSheet.Cells[1, 1]).EntireRow.RowHeight = Header.Height;
+            ((Range) xlWorkSheet.Cells[1, 1]).EntireRow.Interior.Color =
+                ColorTranslator.ToOle(ColorTranslator.FromHtml(Header.BackgroundColour));
+            ((Range) xlWorkSheet.Cells[1, 1]).EntireRow.Font.Color =
+                ColorTranslator.ToOle(ColorTranslator.FromHtml(Header.TextColour));
 
             Console.WriteLine("Formatting the rows");
             var row = 0;
             for (var i = 0; i < Program.Applications.Count; i++)
             {
-                ((Range)xlWorkSheet.Cells[(i + 2), 1]).EntireRow.RowHeight = Rows[row].Height;
-                ((Range)xlWorkSheet.Cells[(i + 2), 1]).EntireRow.Interior.Color = ColorTranslator.ToOle(ColorTranslator.FromHtml(Rows[row].Colour));
+                ((Range) xlWorkSheet.Cells[(i + 2), 1]).EntireRow.RowHeight = Rows[row].Height;
+                ((Range) xlWorkSheet.Cells[(i + 2), 1]).EntireRow.Interior.Color =
+                    ColorTranslator.ToOle(ColorTranslator.FromHtml(Rows[row].Colour));
                 row++;
                 if (row >= Rows.Count)
                     row = 0;
@@ -146,56 +183,55 @@ namespace ExtractFromSharepoint
 
             var oleObjects = (OLEObjects) xlWorkSheet.OLEObjects(Type.Missing);
 
-            for (int i = 0; i < Program.Applications.Count; i++)
+            for (var i = 0; i < Program.Applications.Count; i++)
             {
                 var application = Program.Applications[i];
-                for (int index = 0; index < application.Properties.Count; index++)
+                for (var index = 0; index < application.Properties.Count; index++)
                 {
                     var property = application.Properties[index];
-                    if (property.Contains("||(|)||"))
+                    if (!property.Contains("||(|)||")) continue;
+                    var split = property.Split(new[] {"||(|)||"}, StringSplitOptions.None);
+                    for (var j = 1; j < split.Length; j = j + 2)
                     {
-                        var split = property.Split(new string[] {"||(|)||"}, StringSplitOptions.None);
-                        for (int j = 1; j < split.Length; j=j+2)
+                        var filename = split[j].Split(new[] {"||()||"}, StringSplitOptions.None)[1];
+                        decimal left = 0;
+                        int column;
+                        for (column = 0; column < Columns.Count; column++)
                         {
-                            var filename = split[j].Split(new string[] {"||()||"}, StringSplitOptions.None)[1];
-                            decimal left = 0;
-                            int column;
-                            for (column = 0; column < Columns.Count; column++)
-                            {
-                                if (Columns[column].Name == application.ProperyNames[index])
-                                {
-                                    break;
-                                }
-                                left += Columns[column].Width;
-                            }
-
-                            // If k is equal to the count then the attachment was not found, dont save it to excel
-                            if (column == Columns.Count)
+                            if (Columns[column].Name == application.ProperyNames[index])
                             {
                                 break;
                             }
-
-                            var top = Header.Height;
-                            for (var k = 0; k <= i; k++)
-                            {
-                                if (k == i)
-                                {
-                                    top += Rows[(k % Rows.Count)].Height*(decimal) 0.1;
-                                }
-                                else
-                                {
-                                    top += Rows[(k % Rows.Count)].Height;
-                                }
-                            }
-
-                            var width = (double) (Columns[column].Width*(decimal) 5);
-                            var height = (double) (Rows[i%Rows.Count].Height/(decimal) 1.2);
-                            var ole = oleObjects.Add(Type.Missing, Directory.GetCurrentDirectory() + "\\Objects\\" + filename, false, false, Type.Missing,
-                                Type.Missing, Type.Missing, left*(decimal) 5.415, top, width/3, height);
-                            ole.ShapeRange.LockAspectRatio = MsoTriState.msoFalse;
-                            ole.Width = width;
-                            ole.Height = height;
+                            left += Columns[column].Width;
                         }
+
+                        // If k is equal to the count then the attachment was not found, dont save it to excel
+                        if (column == Columns.Count)
+                        {
+                            break;
+                        }
+
+                        var top = Header.Height;
+                        for (var k = 0; k <= i; k++)
+                        {
+                            if (k == i)
+                            {
+                                top += Rows[(k%Rows.Count)].Height*(decimal) 0.1;
+                            }
+                            else
+                            {
+                                top += Rows[(k%Rows.Count)].Height;
+                            }
+                        }
+
+                        var width = (double) (Columns[column].Width*5);
+                        var height = (double) (Rows[i%Rows.Count].Height/(decimal) 1.2);
+                        var ole = oleObjects.Add(Type.Missing,
+                            Directory.GetCurrentDirectory() + "\\Objects\\" + filename, false, false, Type.Missing,
+                            Type.Missing, Type.Missing, left*(decimal) 5.415, top, width/3, height);
+                        ole.ShapeRange.LockAspectRatio = MsoTriState.msoFalse;
+                        ole.Width = width;
+                        ole.Height = height;
                     }
                 }
             }
@@ -205,7 +241,8 @@ namespace ExtractFromSharepoint
             //    "\\Objects\\Apps AIS - list of apps gone through internal review 08022016.msg", 500, 500);
 
             xlWorkBook.SaveAs(Directory.GetCurrentDirectory() + "\\Export", XlFileFormat.xlOpenXMLWorkbook, misValue,
-                misValue, misValue, misValue, XlSaveAsAccessMode.xlNoChange, XlSaveConflictResolution.xlUserResolution,
+                misValue, misValue, misValue, XlSaveAsAccessMode.xlNoChange,
+                XlSaveConflictResolution.xlUserResolution,
                 true, misValue, misValue, misValue);
             xlWorkBook.Close(true, misValue, misValue);
             xlApp.Quit();
@@ -223,11 +260,9 @@ namespace ExtractFromSharepoint
             try
             {
                 Marshal.ReleaseComObject(obj);
-                obj = null;
             }
             catch (Exception ex)
             {
-                obj = null;
                 Console.WriteLine("Exception Occured while releasing object " + ex);
             }
             finally

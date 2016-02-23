@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using OpenQA.Selenium;
 
 namespace ExtractFromSharepoint
@@ -14,6 +15,9 @@ namespace ExtractFromSharepoint
         /// <param name="ieDriver">The ieDriver to be used to extract the data from</param>
         public AppDetail(ISearchContext ieDriver)
         {
+            if(ieDriver == null)
+                throw new ArgumentNullException(nameof(ieDriver));
+
             // Create empty lists
             ProperyNames = new List<string>();
             Properties = new List<string>();

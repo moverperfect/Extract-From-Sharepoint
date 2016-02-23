@@ -41,6 +41,10 @@ namespace ExtractFromSharepoint
         /// <param name="args"></param>
         private static void Main(string[] args)
         {
+            if (args[0] == "/?")
+            {
+                Console.WriteLine("This app currently does not support any command line arguments");
+            }
             // If the user config exists then import it
             if (FileIo.IsUConfigExist)
             {

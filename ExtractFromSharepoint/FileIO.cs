@@ -103,9 +103,11 @@ namespace ExtractFromSharepoint
                 applications.SubProperties.Add(temp);
             }
 
-            var s = new XmlWriterSettings();
-            s.Indent = true;
-            s.IndentChars = "    ";
+            var s = new XmlWriterSettings
+            {
+                Indent = true,
+                IndentChars = "    "
+            };
             var w = XmlWriter.Create(filename + ".xml", s);
             w.WriteStartDocument();
             w = applications.GetData(w);
