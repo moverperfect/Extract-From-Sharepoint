@@ -5,8 +5,8 @@ namespace ExtractFromSharepoint
         internal Header()
         {
             Height = 0;
-            BackgroundColour = "0";
-            TextColour = "0";
+            BackgroundColour = "";
+            TextColour = "";
         }
 
         internal decimal Height { get; set; }

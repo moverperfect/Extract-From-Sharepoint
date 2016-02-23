@@ -41,7 +41,7 @@ namespace ExtractFromSharepoint
         /// <param name="args"></param>
         private static void Main(string[] args)
         {
-            if (args[0] == "/?")
+            if (args.Length > 0 && args[0] == "/?")
             {
                 Console.WriteLine("This app currently does not support any command line arguments");
             }

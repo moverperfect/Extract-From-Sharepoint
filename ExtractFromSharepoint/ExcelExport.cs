@@ -123,6 +123,10 @@ namespace ExtractFromSharepoint
         {
             if (Columns.Count == 0)
                 throw new Exception("No Columns to export");
+            
+            var formatAsTable = (Header.BackgroundColour != "") && (Header.TextColour != "");
+
+            
 
             Console.WriteLine("Starting export to excel");
             var xlApp = new Application();
@@ -131,6 +135,29 @@ namespace ExtractFromSharepoint
 
             var xlWorkBook = xlApp.Workbooks.Add(misValue);
             var xlWorkSheet = (Worksheet) xlWorkBook.Worksheets.Item[1];
+
+            var row = 0;
+            for (var i = 0; i < Program.Applications.Count; i++)
+            {
+                if (Rows[row].Colour != "")
+                {
+                    formatAsTable = false;
+                }
+                row++;
+                if (row >= Rows.Count)
+                    row = 0;
+            }
+
+            if (formatAsTable)
+            {
+                Console.WriteLine("Adding format as table");
+                var bottomRight = ExcelColumnFromNumber(Columns.Count);
+                bottomRight = bottomRight + (Program.Applications.Count);
+                var range = xlWorkSheet.Range["A1:" + bottomRight];
+                xlWorkSheet.ListObjects.AddEx(XlListObjectSourceType.xlSrcRange, range, Type.Missing,
+                    Microsoft.Office.Interop.Excel.XlYesNoGuess.xlNo, Type.Missing).Name = "WFTableStyle";
+                xlWorkSheet.ListObjects.Item["WFTableStyle"].TableStyle = "TableStyleMedium2";
+            }
 
             Console.WriteLine("Inputting Column names");
             for (var i = 0; i < Columns.Count; i++)
@@ -153,7 +180,7 @@ namespace ExtractFromSharepoint
                     }
                 }
             }
-
+            
             Console.WriteLine("Formatting all of the Columns");
             for (var i = 0; i < Columns.Count; i++)
             {
@@ -162,18 +189,25 @@ namespace ExtractFromSharepoint
 
             Console.WriteLine("Formatting the header");
             ((Range) xlWorkSheet.Cells[1, 1]).EntireRow.RowHeight = Header.Height;
-            ((Range) xlWorkSheet.Cells[1, 1]).EntireRow.Interior.Color =
-                ColorTranslator.ToOle(ColorTranslator.FromHtml(Header.BackgroundColour));
-            ((Range) xlWorkSheet.Cells[1, 1]).EntireRow.Font.Color =
-                ColorTranslator.ToOle(ColorTranslator.FromHtml(Header.TextColour));
+            if (Header.BackgroundColour != "")
+            {
+                ((Range) xlWorkSheet.Cells[1, 1]).EntireRow.Interior.Color =
+                    ColorTranslator.ToOle(ColorTranslator.FromHtml(Header.BackgroundColour));
+                ((Range) xlWorkSheet.Cells[1, 1]).EntireRow.Font.Color =
+                    ColorTranslator.ToOle(ColorTranslator.FromHtml(Header.TextColour));
+            }
 
             Console.WriteLine("Formatting the rows");
-            var row = 0;
+            row = 0;
             for (var i = 0; i < Program.Applications.Count; i++)
             {
                 ((Range) xlWorkSheet.Cells[(i + 2), 1]).EntireRow.RowHeight = Rows[row].Height;
-                ((Range) xlWorkSheet.Cells[(i + 2), 1]).EntireRow.Interior.Color =
-                    ColorTranslator.ToOle(ColorTranslator.FromHtml(Rows[row].Colour));
+                if (Rows[row].Colour != "")
+                {
+                    formatAsTable = false;
+                    ((Range) xlWorkSheet.Cells[(i + 2), 1]).EntireRow.Interior.Color =
+                        ColorTranslator.ToOle(ColorTranslator.FromHtml(Rows[row].Colour));
+                }
                 row++;
                 if (row >= Rows.Count)
                     row = 0;
@@ -269,6 +303,25 @@ namespace ExtractFromSharepoint
             {
                 GC.Collect();
             }
+        }
+
+        /// <summary>
+        /// http://stackoverflow.com/questions/837155/fastest-function-to-generate-excel-column-letters-in-c-sharp
+        /// </summary>
+        /// <param name="column">The integer excel column</param>
+        /// <returns>Alphabet representation of the column</returns>
+        private static string ExcelColumnFromNumber(int column)
+        {
+            var columnString = "";
+            decimal columnNumber = column;
+            while (columnNumber > 0)
+            {
+                var currentLetterNumber = (columnNumber - 1) % 26;
+                var currentLetter = (char)(currentLetterNumber + 65);
+                columnString = currentLetter + columnString;
+                columnNumber = (columnNumber - (currentLetterNumber + 1)) / 26;
+            }
+            return columnString;
         }
     }
 }
