@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading;
 using OpenQA.Selenium;
 using OpenQA.Selenium.IE;
@@ -40,7 +41,13 @@ namespace ExtractFromSharepoint
                         if (Console.ReadLine()?.ToLower() == "y")
                         {
                             Console.WriteLine("Please enter the name of the file to save to");
-                            filename = Console.ReadLine();
+                            filename = Console.ReadLine() ?? "Export";
+                            var unspupportedRegex = new Regex("(^(PRN|AUX|NUL|CON|COM[1-9]|LPT[1-9]|(\\.+)$)(\\..*)?$)|(([\\x00-\\x1f\\\\?*:\";‌​|/<>‌​])+)|([\\. ]+)", RegexOptions.IgnoreCase);
+                            while (unspupportedRegex.IsMatch(filename))
+                            {
+                                Console.WriteLine("This filename is invalid, please try again");
+                                filename = Console.ReadLine() ?? "Export";
+                            }
                         }
                         GetAllSharePointData();
                         if (filename != "")
