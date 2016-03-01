@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using Microsoft.Office.Core;
 using Microsoft.Office.Interop.Excel;
 
@@ -125,17 +126,16 @@ namespace ExtractFromSharepoint
                 throw new Exception("No Columns to export");
             
             var formatAsTable = (Header.BackgroundColour != "") && (Header.TextColour != "");
-
             
-
             Console.WriteLine("Starting export to excel");
             var xlApp = new Application();
 
-            object misValue = Missing.Value;
+            var misValue = Missing.Value;
 
             var xlWorkBook = xlApp.Workbooks.Add(misValue);
             var xlWorkSheet = (Worksheet) xlWorkBook.Worksheets.Item[1];
 
+            // Check to see if we are adding any colours to the export
             var row = 0;
             for (var i = 0; i < Program.Applications.Count; i++)
             {
@@ -148,35 +148,39 @@ namespace ExtractFromSharepoint
                     row = 0;
             }
 
+            // If we are formatting as a table then add it
             if (formatAsTable)
             {
                 Console.WriteLine("Adding format as table");
                 var bottomRight = ExcelColumnFromNumber(Columns.Count);
-                bottomRight = bottomRight + (Program.Applications.Count);
+                bottomRight = bottomRight + Program.Applications.Count;
                 var range = xlWorkSheet.Range["A1:" + bottomRight];
-                xlWorkSheet.ListObjects.AddEx(XlListObjectSourceType.xlSrcRange, range, Type.Missing,
-                    Microsoft.Office.Interop.Excel.XlYesNoGuess.xlNo, Type.Missing).Name = "WFTableStyle";
+                xlWorkSheet.ListObjects.AddEx(XlListObjectSourceType.xlSrcRange, range, misValue,
+                    XlYesNoGuess.xlNo, misValue).Name = "WFTableStyle";
                 xlWorkSheet.ListObjects.Item["WFTableStyle"].TableStyle = "TableStyleMedium2";
             }
 
             Console.WriteLine("Inputting Column names");
             for (var i = 0; i < Columns.Count; i++)
             {
-                xlWorkSheet.Cells[1, (i + 1)] = Columns[i].Name;
+                xlWorkSheet.Cells[1, i + 1] = Columns[i].Name;
             }
 
+            // Add all of the application column values to the sheet
             for (var i = 0; i < Program.Applications.Count; i++)
             {
                 Console.WriteLine("Inputting item no " + (i + 1));
+                // Per Column
                 for (var j = 0; j < Columns.Count; j++)
                 {
+                    // Per property name
                     for (var k = 0; k < Program.Applications[i].ProperyNames.Count; k++)
                     {
-                        if (string.Equals(Program.Applications[i].ProperyNames[k], Columns[j].Name,
-                            StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            xlWorkSheet.Cells[(i + 2), (j + 1)] = Program.Applications[i].Properties[k];
-                        }
+                        // If Column = property name then 
+                        if (!string.Equals(Program.Applications[i].ProperyNames[k], Columns[j].Name,
+                            StringComparison.CurrentCultureIgnoreCase)) continue;
+                        xlWorkSheet.Cells[i + 2, j + 1] = Program.Applications[i].Properties[k];
+                        break;
                     }
                 }
             }
@@ -184,7 +188,7 @@ namespace ExtractFromSharepoint
             Console.WriteLine("Formatting all of the Columns");
             for (var i = 0; i < Columns.Count; i++)
             {
-                ((Range) xlWorkSheet.Cells[1, (i + 1)]).EntireColumn.ColumnWidth = Columns[i].Width;
+                ((Range) xlWorkSheet.Cells[1, i + 1]).EntireColumn.ColumnWidth = Columns[i].Width;
             }
 
             Console.WriteLine("Formatting the header");
@@ -201,11 +205,10 @@ namespace ExtractFromSharepoint
             row = 0;
             for (var i = 0; i < Program.Applications.Count; i++)
             {
-                ((Range) xlWorkSheet.Cells[(i + 2), 1]).EntireRow.RowHeight = Rows[row].Height;
+                ((Range) xlWorkSheet.Cells[i + 2, 1]).EntireRow.RowHeight = Rows[row].Height;
                 if (Rows[row].Colour != "")
                 {
-                    formatAsTable = false;
-                    ((Range) xlWorkSheet.Cells[(i + 2), 1]).EntireRow.Interior.Color =
+                    ((Range) xlWorkSheet.Cells[i + 2, 1]).EntireRow.Interior.Color =
                         ColorTranslator.ToOle(ColorTranslator.FromHtml(Rows[row].Colour));
                 }
                 row++;
@@ -215,20 +218,25 @@ namespace ExtractFromSharepoint
 
             Console.WriteLine("Adding the OLE Objects");
 
-            var oleObjects = (OLEObjects) xlWorkSheet.OLEObjects(Type.Missing);
+            var oleObjects = (OLEObjects) xlWorkSheet.OLEObjects(misValue);
 
+            // For every application
             for (var i = 0; i < Program.Applications.Count; i++)
             {
+                // For every property
                 var application = Program.Applications[i];
                 for (var index = 0; index < application.Properties.Count; index++)
                 {
                     var property = application.Properties[index];
                     if (!property.Contains("||(|)||")) continue;
                     var split = property.Split(new[] {"||(|)||"}, StringSplitOptions.None);
+                    // For every link
                     for (var j = 1; j < split.Length; j = j + 2)
                     {
                         var filename = split[j].Split(new[] {"||()||"}, StringSplitOptions.None)[1];
                         decimal left = 0;
+
+                        // Grab the column that it needs to be in and add the width to the left property
                         int column;
                         for (column = 0; column < Columns.Count; column++)
                         {
@@ -250,19 +258,20 @@ namespace ExtractFromSharepoint
                         {
                             if (k == i)
                             {
-                                top += Rows[(k%Rows.Count)].Height*(decimal) 0.1;
+                                top += Rows[k%Rows.Count].Height*(decimal) 0.1;
                             }
                             else
                             {
-                                top += Rows[(k%Rows.Count)].Height;
+                                top += Rows[k%Rows.Count].Height;
                             }
                         }
 
+                        // All these multipliers are 'magic' numbers
                         var width = (double) (Columns[column].Width*5);
                         var height = (double) (Rows[i%Rows.Count].Height/(decimal) 1.2);
-                        var ole = oleObjects.Add(Type.Missing,
-                            Directory.GetCurrentDirectory() + "\\Objects\\" + filename, false, false, Type.Missing,
-                            Type.Missing, Type.Missing, left*(decimal) 5.415, top, width/3, height);
+                        var ole = oleObjects.Add(misValue,
+                            Directory.GetCurrentDirectory() + "\\Objects\\" + filename, false, false, misValue,
+                            misValue, misValue, left*(decimal) 5.415, top, width/3, height);
                         ole.ShapeRange.LockAspectRatio = MsoTriState.msoFalse;
                         ole.Width = width;
                         ole.Height = height;
@@ -270,11 +279,16 @@ namespace ExtractFromSharepoint
                 }
             }
 
-            //xlWorkSheet.Shapes.AddOLEObject(
-            //    Directory.GetCurrentDirectory() +
-            //    "\\Objects\\Apps AIS - list of apps gone through internal review 08022016.msg", 500, 500);
+            Console.WriteLine("Please enter the name of the file to save to");
+            var excelSave = Console.ReadLine() ?? "Export";
+            var unspupportedRegex = new Regex("(^(PRN|AUX|NUL|CON|COM[1-9]|LPT[1-9]|(\\.+)$)(\\..*)?$)|(([\\x00-\\x1f\\\\?*:\";‌​|/<>‌​])+)|([\\. ]+)", RegexOptions.IgnoreCase);
+            while (unspupportedRegex.IsMatch(excelSave))
+            {
+                Console.WriteLine("This filename is invalid, please try again");
+                excelSave = Console.ReadLine() ?? "Export";
+            }
 
-            xlWorkBook.SaveAs(Directory.GetCurrentDirectory() + "\\Export", XlFileFormat.xlOpenXMLWorkbook, misValue,
+            xlWorkBook.SaveAs(Directory.GetCurrentDirectory() + "\\" + excelSave, XlFileFormat.xlOpenXMLWorkbook, misValue,
                 misValue, misValue, misValue, XlSaveAsAccessMode.xlNoChange,
                 XlSaveConflictResolution.xlUserResolution,
                 true, misValue, misValue, misValue);
@@ -306,7 +320,8 @@ namespace ExtractFromSharepoint
         }
 
         /// <summary>
-        /// http://stackoverflow.com/questions/837155/fastest-function-to-generate-excel-column-letters-in-c-sharp
+        /// Convert a column number into the column letters that are used in excel
+        /// Credit to: http://stackoverflow.com/questions/837155/fastest-function-to-generate-excel-column-letters-in-c-sharp
         /// </summary>
         /// <param name="column">The integer excel column</param>
         /// <returns>Alphabet representation of the column</returns>
