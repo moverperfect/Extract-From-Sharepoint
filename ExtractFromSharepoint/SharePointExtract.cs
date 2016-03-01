@@ -48,6 +48,10 @@ namespace ExtractFromSharepoint
                                 Console.WriteLine("This filename is invalid, please try again");
                                 filename = Console.ReadLine() ?? "Export";
                             }
+                            if (!filename.ToLower().EndsWith(".xml"))
+                            {
+                                filename += ".xml";
+                            }
                         }
                         GetAllSharePointData();
                         if (filename != "")
