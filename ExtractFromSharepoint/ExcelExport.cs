@@ -125,7 +125,7 @@ namespace ExtractFromSharepoint
             if (Columns.Count == 0)
                 throw new Exception("No Columns to export");
             
-            var formatAsTable = (Header.BackgroundColour != "") && (Header.TextColour != "");
+            var formatAsTable = (Header.BackgroundColour == "") && (Header.TextColour == "");
             
             Console.WriteLine("Starting export to excel");
             var xlApp = new Application();
@@ -267,11 +267,11 @@ namespace ExtractFromSharepoint
                         }
 
                         // All these multipliers are 'magic' numbers
-                        var width = (double) (Columns[column].Width*5);
+                        var width = (double) (Columns[column].Width*5)/(((double)split.Length-1)/2);
                         var height = (double) (Rows[i%Rows.Count].Height/(decimal) 1.2);
                         var ole = oleObjects.Add(misValue,
                             Directory.GetCurrentDirectory() + "\\Objects\\" + filename, false, false, misValue,
-                            misValue, misValue, left*(decimal) 5.415, top, width/3, height);
+                            misValue, misValue, left*(decimal) 5.415 + (j-1)/2 * (decimal)width, top, width/3, height);
                         ole.ShapeRange.LockAspectRatio = MsoTriState.msoFalse;
                         ole.Width = width;
                         ole.Height = height;
