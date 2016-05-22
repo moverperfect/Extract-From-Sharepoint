@@ -108,7 +108,7 @@ namespace ExtractFromSharepoint
                 Indent = true,
                 IndentChars = "    "
             };
-            var w = XmlWriter.Create(filename + ".xml", s);
+            var w = XmlWriter.Create(filename + (filename.Contains(".xml")?"":".xml"), s);
             w.WriteStartDocument();
             w = applications.GetData(w);
             w.WriteEndDocument();
@@ -118,7 +118,7 @@ namespace ExtractFromSharepoint
         internal static void ImportItems(string readFile)
         {
             var applications = new List<AppDetail>();
-            var r = XmlReader.Create(readFile + ".xml");
+            var r = XmlReader.Create(readFile + (readFile.Contains(".xml") ? "" : ".xml"));
             var app = new AppDetail();
             while (!r.EOF)
             {
