@@ -164,6 +164,11 @@ namespace ExtractFromSharepoint
             for (var i = 0; i < Columns.Count; i++)
             {
                 xlWorkSheet.Cells[1, i + 1] = Columns[i].Name;
+                if (Columns[i].Name.Contains("Date") || Columns[i].Name.Contains("date"))
+                {
+                    var rg = (Range)xlWorkSheet.Cells[1, i + 1];
+                    rg.EntireColumn.NumberFormat = "DD/MM/YYYY";
+                }
             }
 
             // Add all of the application column values to the sheet
@@ -179,7 +184,15 @@ namespace ExtractFromSharepoint
                         // If Column = property name then 
                         if (!string.Equals(Program.Applications[i].ProperyNames[k], Columns[j].Name,
                             StringComparison.CurrentCultureIgnoreCase)) continue;
-                        xlWorkSheet.Cells[i + 2, j + 1] = Program.Applications[i].Properties[k];
+                        DateTime datetimeval;
+                        if (DateTime.TryParse(Program.Applications[i].Properties[k], out datetimeval))
+                        {
+                            xlWorkSheet.Cells[i + 2, j + 1] = datetimeval.ToOADate();
+                        }
+                        else
+                        {
+                            xlWorkSheet.Cells[i + 2, j + 1] = Program.Applications[i].Properties[k];
+                        }
                         break;
                     }
                 }
@@ -271,7 +284,7 @@ namespace ExtractFromSharepoint
                         var height = (double) (Rows[i%Rows.Count].Height/(decimal) 1.2);
                         var ole = oleObjects.Add(misValue,
                             Directory.GetCurrentDirectory() + "\\Objects\\" + filename, false, false, misValue,
-                            misValue, misValue, left*(decimal) 5.415 + (j-1)/2 * (decimal)width, top, width/3, height);
+                            misValue, misValue, left*(decimal) 5.415 + (j-0x1)/2 * (decimal)width, top, width/3, height);
                         ole.ShapeRange.LockAspectRatio = MsoTriState.msoFalse;
                         ole.Width = width;
                         ole.Height = height;
