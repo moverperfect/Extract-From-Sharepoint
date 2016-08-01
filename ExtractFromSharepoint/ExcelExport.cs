@@ -185,7 +185,8 @@ namespace ExtractFromSharepoint
                         if (!string.Equals(Program.Applications[i].ProperyNames[k], Columns[j].Name,
                             StringComparison.CurrentCultureIgnoreCase)) continue;
                         DateTime datetimeval;
-                        if (DateTime.TryParse(Program.Applications[i].Properties[k], out datetimeval))
+                        if ((Columns[j].Name.Contains("Date") || Columns[j].Name.Contains("date")) &&
+                            DateTime.TryParse(Program.Applications[i].Properties[k], out datetimeval))
                         {
                             xlWorkSheet.Cells[i + 2, j + 1] = datetimeval.ToOADate();
                         }
@@ -279,18 +280,32 @@ namespace ExtractFromSharepoint
                             }
                         }
 
-                        // All these multipliers are 'magic' numbers
-                        var width = (double) (Columns[column].Width*5)/(((double)split.Length-1)/2);
-                        var height = (double) (Rows[i%Rows.Count].Height/(decimal) 1.2);
-                        var ole = oleObjects.Add(misValue,
-                            Directory.GetCurrentDirectory() + "\\Objects\\" + filename, false, false, misValue,
-                            misValue, misValue, left*(decimal) 5.415 + (j-0x1)/2 * (decimal)width, top, width/3, height);
-                        ole.ShapeRange.LockAspectRatio = MsoTriState.msoFalse;
-                        ole.Width = width;
-                        ole.Height = height;
+                        try
+                        {
+                            // All these multipliers are 'magic' numbers
+                            var width = (double) (Columns[column].Width*5)/(((double)split.Length-1)/2);
+                            var height = (double) (Rows[i%Rows.Count].Height/(decimal) 1.2);
+                            var ole = oleObjects.Add(misValue,
+                                Directory.GetCurrentDirectory() + "\\Objects\\" + filename, false, false, misValue,
+                                misValue, misValue, left*(decimal) 5.415 + (j-0x1)/2 * (decimal)width, top, width/3, height);
+                            ole.ShapeRange.LockAspectRatio = MsoTriState.msoFalse;
+                            ole.Width = width;
+                            ole.Height = height;
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("Error adding object called " + filename);
+                        }
                     }
                 }
             }
+
+
+            dynamic properties = xlWorkBook.CustomDocumentProperties;
+                
+            properties.Add("Source", false,
+                MsoDocProperties.msoPropertyTypeString,
+                "Created by " + typeof(Program).Assembly.GetName().Version + " of Jack's SharePoint Extractor");
 
             Console.WriteLine("Please enter the name of the file to save to");
             var excelSave = Console.ReadLine() ?? "Export";
