@@ -8,18 +8,24 @@ using OpenQA.Selenium.IE;
 
 namespace ExtractFromSharepoint
 {
-    static class SharePointExtract
+    /// <summary>
+    /// Handles main functionality of the program
+    /// </summary>
+    internal static class SharePointExtract
     {
+        /// <summary>
+        /// Entry point into the sharepoint extract class
+        /// </summary>
         internal static void Main()
         {
             while (true)
             {
                 Console.Clear();
-                Console.WriteLine("There are " + Program.Applications.Count + " application/s stored");
+                Console.WriteLine("There are " + Program.Applications.Count + " application/s stored in memory");
                 Console.WriteLine("Sharepoint extract menu");
                 Console.WriteLine("1. Extract from sharepoint site");
                 Console.WriteLine("2. Extract from file");
-                Console.WriteLine("3. Extract to excel file");
+                Console.WriteLine("3. Export to excel file");
                 Console.WriteLine("4. Back");
 
                 var option = Console.ReadLine();
@@ -81,9 +87,17 @@ namespace ExtractFromSharepoint
 
         private static void GetAllSharePointData()
         {
-            // Create a new IE driver and navigate to the url
-            var ieDriver = new InternetExplorerDriver();
-            ieDriver.Navigate().GoToUrl(Program.ListUrl);
+            InternetExplorerDriver ieDriver;
+            try
+            {
+                // Create a new IE driver and navigate to the url
+                ieDriver = new InternetExplorerDriver();
+                ieDriver.Navigate().GoToUrl(Program.ListUrl);
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Error occured when starting the IE driver", e);
+            }
 
             // Wait for the user to log in and go through security concerns
             Console.WriteLine("Please log in to the sharepoint site and wait for it to load, once complete please press enter");
@@ -119,7 +133,7 @@ namespace ExtractFromSharepoint
             return allLinks;
         }
 
-        static void GetPageDetails(string[] allLinks, InternetExplorerDriver ieDriver)
+        static void GetPageDetails(string[] allLinks, IWebDriver ieDriver)
         {
             for (var i = 0; i < allLinks.Length; i++)
             {
@@ -164,8 +178,15 @@ namespace ExtractFromSharepoint
                 ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
                 for (var i = 0; i < urls.Count; i++)
                 {
-                    client.DownloadFile(urls[i], "Objects\\" + fileNames[i]);
-                    Console.WriteLine("Downloaded file " + (i + 1));
+                    try
+                    {
+                        client.DownloadFile(urls[i], "Objects\\" + fileNames[i]);
+                        Console.WriteLine("Downloaded file " + (i + 1));
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
                 }
             }
         }
