@@ -38,6 +38,9 @@ namespace ExtractFromSharepoint
 
             for (var i = 0; i < formtables.Count - 1; i++)
             {
+                tabElements[i - blacklist.Count < 0 ? 0 : i - blacklist.Count].Click();
+                tabElements[i - blacklist.Count < 0 ? 0 : i - blacklist.Count].Click();
+
                 var formtable = formtables[i];
                 if (formtable.FindElements(By.ClassName("ms-formtable")).Count > 0)
                 {
@@ -51,8 +54,6 @@ namespace ExtractFromSharepoint
                     continue;
                 }
 
-                tabElements[i].Click();
-                tabElements[i].Click();
                 // Grab all of the rows from the form page and iterate over them
                 var rows = formtable.FindElements(By.TagName("tr"));
                 foreach (var row in rows)
