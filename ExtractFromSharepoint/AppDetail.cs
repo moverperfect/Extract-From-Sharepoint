@@ -81,6 +81,9 @@ namespace ExtractFromSharepoint
                                 "(^(PRN|AUX|NUL|CON|COM[1-9]|LPT[1-9]|(\\.+)$)(\\..*)?$)|(([\\x00-\\x1f\\\\?*:\";‌​|/<>‌​])+)",
                                 RegexOptions.IgnoreCase);
 
+                        if (href == null)
+                            href = link.Text;
+
                         // If the href is an external site then continue
                         if (!href.Contains(Program.Domian) || unspupportedRegex.IsMatch(link.Text))
                             continue;
