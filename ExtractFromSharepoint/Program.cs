@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace ExtractFromSharepoint
 {
@@ -70,7 +71,17 @@ namespace ExtractFromSharepoint
                 switch (option)
                 {
                     case "1":
-                        SharePointExtract.Main();
+                        try
+                        {
+                            SharePointExtract.Main();
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("We encountered an error during extraction");
+                            Console.WriteLine(e.Message);
+                            Console.WriteLine(e.StackTrace);
+                            Console.ReadLine();
+                        }
                         break;
 
                     case "2":
